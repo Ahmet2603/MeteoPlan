@@ -1,0 +1,52 @@
+import os
+
+from dotenv import load_dotenv
+from google import genai
+
+
+load_dotenv()
+
+API_KEY = os.getenv("GEMINI_API_KEY")
+
+if not API_KEY:
+    raise ValueError(
+        "GEMINI_API_KEY bulunamadı. "
+        ".env dosyanızı kontrol edin."
+    )
+
+client = genai.Client(api_key=API_KEY)
+
+
+def generate_daily_plan(
+    city,
+    temperature,
+    description,
+    humidity,
+    wind_speed
+):
+    prompt = f"""
+Sen MeteoPlan adlı hava durumuna göre günlük plan
+önerileri oluşturan bir yapay zekâ asistanısın.
+
+Şehir: {city}
+Sıcaklık: {temperature} °C
+Hava durumu: {description}
+Nem: %{humidity}
+Rüzgâr: {wind_speed} km/sa
+
+Bu hava koşullarına göre kullanıcı için pratik
+ve anlaşılır bir günlük plan öner.
+
+Önerilerini saatlere göre sırala.
+Dışarıda yapılabilecek aktiviteler ile
+içeride yapılabilecek aktiviteleri dengeli şekilde belirt.
+
+Yanıtı Türkçe ver.
+Kısa, anlaşılır ve günlük hayatta uygulanabilir olsun.
+"""
+
+    chat = client.chats.create(model="gemini-3.5-flash")
+
+    response = chat.send_message(prompt)
+
+    return response.text
