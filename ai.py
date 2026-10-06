@@ -1,4 +1,3 @@
-
 import os
 
 import streamlit as st
@@ -8,6 +7,7 @@ from google import genai
 
 load_dotenv()
 
+
 try:
     API_KEY = st.secrets.get(
         "GEMINI_API_KEY",
@@ -15,11 +15,14 @@ try:
     )
 except Exception:
     API_KEY = os.getenv("GEMINI_API_KEY")
+
+
 if not API_KEY:
     raise ValueError(
         "GEMINI_API_KEY bulunamadı. "
         "Streamlit Secrets veya .env dosyanızı kontrol edin."
     )
+
 
 client = genai.Client(api_key=API_KEY)
 
@@ -52,9 +55,30 @@ Yanıtı Türkçe ver.
 Kısa, anlaşılır ve günlük hayatta uygulanabilir olsun.
 """
 
-    chat = client.chats.create(model="gemini-3.5-flash")
+    models = [
+        "gemini-3.8-flash",
+        "gemini-3.7-flash",
+        "gemini-3.6-flash",
+        "gemini-3.5-flash-lite"
+    ]
 
-    response = chat.send_message(prompt)
+    last_error = None
 
-    return response.text
+    for model in models:
+        try:
+            chat = client.chats.create(model=model)
+
+            response = chat.send_message(prompt)
+
+            return response.text
+
+        except Exception as error:
+            last_error = error
+
+            if "503" in str(error):
+                continue
+
+            raise error
+
+    raise last_error
 
