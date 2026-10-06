@@ -1,17 +1,24 @@
+
 import os
 
+import streamlit as st
 from dotenv import load_dotenv
 from google import genai
 
 
 load_dotenv()
 
-API_KEY = os.getenv("GEMINI_API_KEY")
+# Önce Streamlit Secrets kontrol edilir.
+# Yoksa yerel bilgisayardaki .env dosyasından okunur.
+API_KEY = st.secrets.get(
+    "GEMINI_API_KEY",
+    os.getenv("GEMINI_API_KEY")
+)
 
 if not API_KEY:
     raise ValueError(
         "GEMINI_API_KEY bulunamadı. "
-        ".env dosyanızı kontrol edin."
+        "Streamlit Secrets veya .env dosyanızı kontrol edin."
     )
 
 client = genai.Client(api_key=API_KEY)
@@ -50,3 +57,4 @@ Kısa, anlaşılır ve günlük hayatta uygulanabilir olsun.
     response = chat.send_message(prompt)
 
     return response.text
+
