@@ -8,13 +8,13 @@ from google import genai
 
 load_dotenv()
 
-# Önce Streamlit Secrets kontrol edilir.
-# Yoksa yerel bilgisayardaki .env dosyasından okunur.
-API_KEY = st.secrets.get(
-    "GEMINI_API_KEY",
-    os.getenv("GEMINI_API_KEY")
-)
-
+try:
+    API_KEY = st.secrets.get(
+        "GEMINI_API_KEY",
+        os.getenv("GEMINI_API_KEY")
+    )
+except Exception:
+    API_KEY = os.getenv("GEMINI_API_KEY")
 if not API_KEY:
     raise ValueError(
         "GEMINI_API_KEY bulunamadı. "

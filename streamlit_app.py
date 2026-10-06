@@ -895,7 +895,9 @@ if "city_name" not in st.session_state:
 
 # ANA SAYFA SÜTUNLARI
 sol, sag = st.columns([1.25, 1])
+
 with sol:
+
     # -------------------------------------------------
     # BAŞLIK
     # -------------------------------------------------
@@ -903,30 +905,28 @@ with sol:
     st.html(
         """
         <div class="meteo-header">
-    
+
             <div class="meteo-logo">
                 🌤️
             </div>
-    
+
             <div>
                 <div class="meteo-brand">
                     MeteoPlan
                 </div>
-    
+
                 <div class="meteo-subtitle">
                     Hava durumuna göre gününü planla.
                 </div>
             </div>
-    
+
         </div>
         """
     )
 
-
     # -------------------------------------------------
     # ŞEHİR ARAMA
     # -------------------------------------------------
-
 
     city = st.text_input(
         "Şehir adı",
@@ -937,12 +937,14 @@ with sol:
         "🔍 Hava Durumunu Getir",
         type="primary"
     )
+
     if search_button:
         st.session_state.favorite_search = False
 
     if st.session_state.get("favorite_search", False):
         city = st.session_state.favorite_city
         search_button = True
+
     # -------------------------------------------------
     # FAVORİ ŞEHİRLER
     # -------------------------------------------------
@@ -952,8 +954,8 @@ with sol:
     if favorites:
 
         if st.button(
-                "❤️ Favori Şehirler",
-                key="favorite_cities_button"
+            "❤️ Favori Şehirler",
+            key="favorite_cities_button"
         ):
 
             st.session_state.show_favorites = not st.session_state.get(
@@ -987,8 +989,8 @@ with sol:
                     )
 
                     if st.button(
-                            "🌤️ Hava Durumunu Getir",
-                            key=f"favorite_weather_{index}"
+                        "🌤️ Hava Durumunu Getir",
+                        key=f"favorite_weather_{index}"
                     ):
                         st.session_state.city_name = favorite_city
                         st.session_state.favorite_city = favorite_city
@@ -996,378 +998,382 @@ with sol:
                         st.rerun()
 
                     if st.button(
-                            "💔 Favorilerden Çıkar",
-                            key=f"delete_favorite_{index}"
+                        "💔 Favorilerden Çıkar",
+                        key=f"delete_favorite_{index}"
                     ):
                         delete_favorite(favorite_id)
                         st.rerun()
 
+    # -------------------------------------------------
+    # HAVA DURUMU
+    # -------------------------------------------------
 
+    if search_button or st.session_state.weather_data is not None:
 
-# -------------------------------------------------
-# HAVA DURUMU
-# -------------------------------------------------
+        if not city.strip():
 
+            st.warning("Lütfen bir şehir adı girin.")
 
-if search_button or st.session_state.weather_data is not None:
+        else:
 
-    if not city.strip():
+            try:
 
-        st.warning("Lütfen bir şehir adı girin.")
+                with st.spinner("Hava durumu getiriliyor..."):
 
-    else:
+                    weather = get_weather(city.strip())
 
-        try:
+                if weather:
 
-            with st.spinner("Hava durumu getiriliyor..."):
+                    st.session_state.weather_data = weather
 
-                weather = get_weather(city.strip())
+                if weather is None:
 
-            if weather:
-
-                st.session_state.weather_data = weather
-
-            if weather is None:
-
-                st.error(
-                    "Bu şehir bulunamadı. "
-                    "Lütfen şehir adını kontrol edin."
-                )
-
-            else:
-
-                location = weather["location"]
-                current = weather["current"]
-
-                city_name = location["name"]
-                st.session_state.city_name = city_name
-
-                # -------------------------------------------------
-                # FAVORİYE EKLE
-                # -------------------------------------------------
-
-                if st.button(
-                    "❤️ Favorilere Ekle",
-                    key="add_favorite_button"
-                ):
-
-                    add_favorite(city_name)
-
-                    st.success(
-                        f"❤️ {city_name} favorilere eklendi."
+                    st.error(
+                        "Bu şehir bulunamadı. "
+                        "Lütfen şehir adını kontrol edin."
                     )
 
-                    st.markdown(
-                        "<div style='height: 2px;'></div>",
-                        unsafe_allow_html=True
-                    )
+                else:
 
-                country = location["country"]
+                    location = weather["location"]
+                    current = weather["current"]
 
-                temperature = current.get(
-                    "temperature_2m"
-                )
+                    city_name = location["name"]
+                    st.session_state.city_name = city_name
 
-                apparent_temperature = current.get(
-                    "apparent_temperature"
-                )
+                    # -------------------------------------------------
+                    # FAVORİYE EKLE
+                    # -------------------------------------------------
 
-                humidity = current.get(
-                    "relative_humidity_2m"
-                )
-
-                wind_speed = current.get(
-                    "wind_speed_10m"
-                )
-
-                visibility = current.get(
-                    "visibility"
-                )
-
-                weather_code = current.get(
-                    "weather_code"
-                )
-
-                description = weather_code_to_text(
-                    weather_code
-                )
-
-                # -----------------------------
-                # KONUM
-                # -----------------------------
-
-                st.markdown(
-                    f"""
-                    <div class="location-card">
-                        📍 {city_name}, {country}
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-                # -----------------------------
-                # MODERN HAVA BİLGİ KARTLARI
-                # -----------------------------
-
-                st.html(
-                    f"""
-                    <div class="main-weather-card">
-
-                        <div class="main-weather-left">
-
-                            <div class="main-weather-icon">
-                                🌤️
-                            </div>
-
-                            <div>
-                                <div class="main-temperature">
-                                    {temperature}°C
-                                </div>
-
-                                <div class="main-weather-description">
-                                    {description}
-                                </div>
-                            </div>
-
-                        </div>
-
-                        <div class="main-weather-divider"></div>
-
-                        <div class="main-weather-details">
-
-                            <div class="weather-detail-item">
-                                <div class="weather-detail-icon">🌡️</div>
-                                <div>
-                                    <div class="weather-detail-title">
-                                        Hissedilen
-                                    </div>
-                                    <div class="weather-detail-value">
-                                        {apparent_temperature}°C
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="weather-detail-item">
-                                <div class="weather-detail-icon">💧</div>
-                                <div>
-                                    <div class="weather-detail-title">
-                                        Nem
-                                    </div>
-                                    <div class="weather-detail-value">
-                                        %{humidity}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="weather-detail-item">
-                                <div class="weather-detail-icon">💨</div>
-                                <div>
-                                    <div class="weather-detail-title">
-                                        Rüzgâr
-                                    </div>
-                                    <div class="weather-detail-value">
-                                        {wind_speed} km/sa
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="weather-detail-item">
-                                <div class="weather-detail-icon">👁️</div>
-                                <div>
-                                    <div class="weather-detail-title">
-                                        Görüş
-                                    </div>
-                                    <div class="weather-detail-value">
-                                        {
-                                            f"{visibility / 1000:.1f} km"
-                                            if visibility is not None
-                                            else "—"
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-
-                    </div>
-                    """
-                )
-
-                # -----------------------------
-                # SAATLİK TAHMİN
-                # -----------------------------
-
-                st.subheader("🕐 Saatlik Hava Durumu")
-
-                weather = st.session_state.get(
-                    "weather_data"
-                ) or {}
-
-                hourly = weather.get(
-                    "hourly",
-                    {}
-                )
-
-                hourly_times = hourly.get(
-                    "time",
-                    []
-                )
-
-                hourly_temperatures = hourly.get(
-                    "temperature_2m",
-                    []
-                )
-
-                hourly_precipitation = hourly.get(
-                    "precipitation_probability",
-                    []
-                )
-
-                hourly_weather_codes = hourly.get(
-                    "weather_code",
-                    []
-                )
-
-                if hourly_times:
-
-                    # Mevcut saatten sonraki 12 saati göster
-
-                    current_time = current.get(
-                        "time",
-                        ""
-                    )
-
-                    start_index = 0
-
-                    for i, time_value in enumerate(
-                        hourly_times
+                    if st.button(
+                        "❤️ Favorilere Ekle",
+                        key="add_favorite_button"
                     ):
 
-                        if time_value[:13] >= current_time[:13]:
+                        add_favorite(city_name)
 
-                            start_index = i
-                            break
-
-                    hourly_data = []
-
-                    for i in range(
-                        start_index,
-                        min(
-                            start_index + 12,
-                            len(hourly_times)
-                        )
-                    ):
-
-                        time_value = hourly_times[i]
-
-                        # 2026-09-30T14:00
-                        # → 14:00
-
-                        time_text = time_value[-5:]
-
-                        temperature_value = (
-                            hourly_temperatures[i]
-                            if i < len(hourly_temperatures)
-                            else None
+                        st.success(
+                            f"❤️ {city_name} favorilere eklendi."
                         )
 
-                        precipitation_value = (
-                            hourly_precipitation[i]
-                            if i < len(hourly_precipitation)
-                            else None
+                        st.markdown(
+                            "<div style='height: 2px;'></div>",
+                            unsafe_allow_html=True
                         )
 
-                        weather_code_value = (
-                            hourly_weather_codes[i]
-                            if i < len(hourly_weather_codes)
-                            else None
-                        )
+                    country = location["country"]
 
-                        weather_text = weather_code_to_text(
-                            weather_code_value
-                        )
+                    temperature = current.get(
+                        "temperature_2m"
+                    )
 
-                        hourly_data.append(
-                            {
-                                "Saat": time_text,
-                                "Hava": weather_text,
-                                "Sıcaklık": (
-                                    f"{temperature_value} °C"
-                                ),
-                                "Yağış İhtimali": (
-                                    f"%{precipitation_value}"
-                                    if precipitation_value is not None
-                                    else "-"
-                                )
-                            }
-                        )
+                    apparent_temperature = current.get(
+                        "apparent_temperature"
+                    )
 
-                    hourly_cards_html = ""
+                    humidity = current.get(
+                        "relative_humidity_2m"
+                    )
 
-                    for item in hourly_data:
+                    wind_speed = current.get(
+                        "wind_speed_10m"
+                    )
 
-                        weather_text = item["Hava"]
+                    visibility = current.get(
+                        "visibility"
+                    )
 
-                        if "Yağmur" in weather_text:
+                    weather_code = current.get(
+                        "weather_code"
+                    )
 
-                            weather_icon = "🌧️"
+                    description = weather_code_to_text(
+                        weather_code
+                    )
 
-                        elif "Kar" in weather_text:
-
-                            weather_icon = "❄️"
-
-                        elif "Fırtına" in weather_text:
-
-                            weather_icon = "⛈️"
-
-                        elif "Bulutlu" in weather_text:
-
-                            weather_icon = "☁️"
-
-                        elif "Açık" in weather_text:
-
-                            weather_icon = "☀️"
-
-                        else:
-
-                            weather_icon = "🌤️"
-
-                        hourly_cards_html += f"""
-                        <div class="hourly-card">
-                            <div class="hourly-time">
-                                {item["Saat"]}
-                            </div>
-
-                            <div class="hourly-icon">
-                                {weather_icon}
-                            </div>
-
-                            <div class="hourly-temperature">
-                                {item["Sıcaklık"]}
-                            </div>
-
-                            <div class="hourly-weather">
-                                {weather_text}
-                            </div>
-
-                            <div class="hourly-rain">
-                                💧 {item["Yağış İhtimali"]}
-                            </div>
-                        </div>
-                        """
+                    # -------------------------------------------------
+                    # KONUM
+                    # -------------------------------------------------
 
                     st.markdown(
                         f"""
-                        <div class="hourly-scroll">
-                            {hourly_cards_html}
+                        <div class="location-card">
+                            📍 {city_name}, {country}
                         </div>
                         """,
                         unsafe_allow_html=True
                     )
 
-                    # -----------------------------
+                    # -------------------------------------------------
+                    # MODERN HAVA BİLGİ KARTLARI
+                    # -------------------------------------------------
+
+                    st.html(
+                        f"""
+                        <div class="main-weather-card">
+
+                            <div class="main-weather-left">
+
+                                <div class="main-weather-icon">
+                                    🌤️
+                                </div>
+
+                                <div>
+                                    <div class="main-temperature">
+                                        {temperature}°C
+                                    </div>
+
+                                    <div class="main-weather-description">
+                                        {description}
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="main-weather-divider"></div>
+
+                            <div class="main-weather-details">
+
+                                <div class="weather-detail-item">
+                                    <div class="weather-detail-icon">🌡️</div>
+                                    <div>
+                                        <div class="weather-detail-title">
+                                            Hissedilen
+                                        </div>
+                                        <div class="weather-detail-value">
+                                            {apparent_temperature}°C
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="weather-detail-item">
+                                    <div class="weather-detail-icon">💧</div>
+                                    <div>
+                                        <div class="weather-detail-title">
+                                            Nem
+                                        </div>
+                                        <div class="weather-detail-value">
+                                            %{humidity}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="weather-detail-item">
+                                    <div class="weather-detail-icon">💨</div>
+                                    <div>
+                                        <div class="weather-detail-title">
+                                            Rüzgâr
+                                        </div>
+                                        <div class="weather-detail-value">
+                                            {wind_speed} km/sa
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="weather-detail-item">
+                                    <div class="weather-detail-icon">👁️</div>
+                                    <div>
+                                        <div class="weather-detail-title">
+                                            Görüş
+                                        </div>
+                                        <div class="weather-detail-value">
+                                            {
+                                                f"{visibility / 1000:.1f} km"
+                                                if visibility is not None
+                                                else "—"
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+                        """
+                    )
+
+                    # -------------------------------------------------
+                    # SAATLİK TAHMİN
+                    # -------------------------------------------------
+
+                    st.subheader("🕐 Saatlik Hava Durumu")
+
+                    weather = st.session_state.get(
+                        "weather_data"
+                    ) or {}
+
+                    hourly = weather.get(
+                        "hourly",
+                        {}
+                    )
+
+                    hourly_times = hourly.get(
+                        "time",
+                        []
+                    )
+
+                    hourly_temperatures = hourly.get(
+                        "temperature_2m",
+                        []
+                    )
+
+                    hourly_precipitation = hourly.get(
+                        "precipitation_probability",
+                        []
+                    )
+
+                    hourly_weather_codes = hourly.get(
+                        "weather_code",
+                        []
+                    )
+
+                    if hourly_times:
+
+                        # Mevcut saatten sonraki 12 saati göster
+
+                        current_time = current.get(
+                            "time",
+                            ""
+                        )
+
+                        start_index = 0
+
+                        for i, time_value in enumerate(
+                            hourly_times
+                        ):
+
+                            if time_value[:13] >= current_time[:13]:
+
+                                start_index = i
+                                break
+
+                        hourly_data = []
+
+                        for i in range(
+                            start_index,
+                            min(
+                                start_index + 12,
+                                len(hourly_times)
+                            )
+                        ):
+
+                            time_value = hourly_times[i]
+
+                            # 2026-09-30T14:00
+                            # → 14:00
+
+                            time_text = time_value[-5:]
+
+                            temperature_value = (
+                                hourly_temperatures[i]
+                                if i < len(hourly_temperatures)
+                                else None
+                            )
+
+                            precipitation_value = (
+                                hourly_precipitation[i]
+                                if i < len(hourly_precipitation)
+                                else None
+                            )
+
+                            weather_code_value = (
+                                hourly_weather_codes[i]
+                                if i < len(hourly_weather_codes)
+                                else None
+                            )
+
+                            weather_text = weather_code_to_text(
+                                weather_code_value
+                            )
+
+                            hourly_data.append(
+                                {
+                                    "Saat": time_text,
+                                    "Hava": weather_text,
+                                    "Sıcaklık": (
+                                        f"{temperature_value} °C"
+                                    ),
+                                    "Yağış İhtimali": (
+                                        f"%{precipitation_value}"
+                                        if precipitation_value is not None
+                                        else "-"
+                                    )
+                                }
+                            )
+
+                        hourly_cards_html = ""
+
+                        for item in hourly_data:
+
+                            weather_text = item["Hava"]
+
+                            if "Yağmur" in weather_text:
+
+                                weather_icon = "🌧️"
+
+                            elif "Kar" in weather_text:
+
+                                weather_icon = "❄️"
+
+                            elif "Fırtına" in weather_text:
+
+                                weather_icon = "⛈️"
+
+                            elif "Bulutlu" in weather_text:
+
+                                weather_icon = "☁️"
+
+                            elif "Açık" in weather_text:
+
+                                weather_icon = "☀️"
+
+                            else:
+
+                                weather_icon = "🌤️"
+
+                            hourly_cards_html += f"""
+                            <div class="hourly-card">
+
+                                <div class="hourly-time">
+                                    {item["Saat"]}
+                                </div>
+
+                                <div class="hourly-icon">
+                                    {weather_icon}
+                                </div>
+
+                                <div class="hourly-temperature">
+                                    {item["Sıcaklık"]}
+                                </div>
+
+                                <div class="hourly-weather">
+                                    {weather_text}
+                                </div>
+
+                                <div class="hourly-rain">
+                                    💧 {item["Yağış İhtimali"]}
+                                </div>
+
+                            </div>
+                            """
+
+                        st.html(
+                            f"""
+                            <div class="hourly-scroll">
+                                {hourly_cards_html}
+                            </div>
+                            """
+                        )
+
+                    else:
+
+                        st.info(
+                            "Saatlik tahmin verisi bulunamadı."
+                        )
+
+                    # -------------------------------------------------
                     # SICAKLIK GRAFİĞİ
-                    # -----------------------------
+                    # -------------------------------------------------
 
                     st.subheader(
                         "📈 Saatlik Sıcaklık Grafiği"
@@ -1441,17 +1447,11 @@ if search_button or st.session_state.weather_data is not None:
                         use_container_width=True
                     )
 
-                else:
+            except Exception as error:
 
-                    st.info(
-                        "Saatlik tahmin verisi bulunamadı."
-                    )
-
-        except Exception as error:
-
-            st.error(
-                f"Hava durumu alınırken bir hata oluştu: {error}"
-            )
+                st.error(
+                    f"Hava durumu alınırken bir hata oluştu: {error}"
+                )
 
 
 
